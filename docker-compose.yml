@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  video-extractor:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_PATH=runtime/db/metadata.db
+      - FRAMES_BASE_PATH=runtime/frames
+    volumes:
+      - ./runtime:/app/runtime
+      - ./sample.mp4:/app/sample.mp4:ro  # Mount sample video if exists
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - video-extractor-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - video-extractor-network
+
+volumes:
+  redis-data:
+
+networks:
+  video-extractor-network:
+    driver: bridge

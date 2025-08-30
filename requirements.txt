@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+opencv-python
+ffmpeg-python
+redis
+python-dotenv
+httpx
+pytest
+pytest-asyncio
+coverage

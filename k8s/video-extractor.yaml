@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-extractor
+  namespace: video-extractor
+  labels:
+    app: video-extractor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: video-extractor
+  template:
+    metadata:
+      labels:
+        app: video-extractor
+    spec:
+      containers:
+      - name: video-extractor
+        image: video-extractor:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: video-extractor-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        volumeMounts:
+        - name: app-data
+          mountPath: /app/runtime
+        - name: video-storage
+          mountPath: /app/videos
+      volumes:
+      - name: app-data
+        persistentVolumeClaim:
+          claimName: app-data-pvc
+      - name: video-storage
+        persistentVolumeClaim:
+          claimName: video-storage-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: video-extractor-service
+  namespace: video-extractor
+  labels:
+    app: video-extractor
+spec:
+  selector:
+    app: video-extractor
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-data-pvc
+  namespace: video-extractor
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: video-storage-pvc
+  namespace: video-extractor
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
