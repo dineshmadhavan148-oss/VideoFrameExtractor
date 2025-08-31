@@ -44,10 +44,14 @@
             <span>/video-job - Submit new video processing job</span>
         </div>
         <div class="endpoint-body" id="submit-job">
-            <form onsubmit="submitJob(event)">
+            <form onsubmit="submitJob(event)" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label>Video Source (file path or URL):</label>
-                    <input type="text" id="video_source" placeholder="sample.mp4 or http://example.com/video.mp4" required>
+                    <label>Upload Video File:</label>
+                    <input type="file" id="video_file" accept="video/*">
+                </div>
+                <div class="form-group">
+                    <label>OR Video Source (file path or URL):</label>
+                    <input type="text" id="video_source" placeholder="sample.mp4 or http://example.com/video.mp4">
                 </div>
                 <div class="form-group">
                     <label>Interval (seconds between frames):</label>
@@ -164,18 +168,49 @@
 
         async function submitJob(event) {
             event.preventDefault();
-            const data = {
-                video_source: document.getElementById('video_source').value,
-                interval: parseFloat(document.getElementById('interval').value)
-            };
-            const result = await makeRequest('/video-job', { method: 'POST', body: JSON.stringify(data) });
-            showResponse('submit-response', result);
-            if (result.success && result.data.job_id) {
-                // Auto-fill job ID in other forms
-                const jobId = result.data.job_id;
-                document.getElementById('job_id_status').value = jobId;
-                document.getElementById('job_id_frames').value = jobId;
-                document.getElementById('job_id_cancel').value = jobId;
+            
+            const fileInput = document.getElementById('video_file');
+            const videoSource = document.getElementById('video_source').value;
+            const interval = parseFloat(document.getElementById('interval').value);
+            
+            // Check if either file or video source is provided
+            if (!fileInput.files[0] && !videoSource) {
+                showResponse('submit-response', {
+                    success: false,
+                    error: 'Please either upload a file or provide a video source path'
+                });
+                return;
+            }
+            
+            // Create FormData for file upload
+            const formData = new FormData();
+            if (fileInput.files[0]) {
+                formData.append('file', fileInput.files[0]);
+            }
+            if (videoSource) {
+                formData.append('video_source', videoSource);
+            }
+            formData.append('interval', interval.toString());
+            
+            try {
+                const response = await fetch('/video-job', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                const result = { success: response.ok, data, status: response.status };
+                
+                showResponse('submit-response', result);
+                if (result.success && result.data.job_id) {
+                    // Auto-fill job ID in other forms
+                    const jobId = result.data.job_id;
+                    document.getElementById('job_id_status').value = jobId;
+                    document.getElementById('job_id_frames').value = jobId;
+                    document.getElementById('job_id_cancel').value = jobId;
+                }
+            } catch (error) {
+                showResponse('submit-response', { success: false, error: error.message });
             }
         }
 

@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 # from fastapi.templating import Jinja2Templates  # Not needed
@@ -54,25 +54,56 @@ cache_manager = CacheManager()
 job_manager = JobManager(db_manager, cache_manager)
 dashboard_service = DashboardService(db_manager, cache_manager)
 
+# Create uploads directory
+uploads_dir = os.path.join(project_root, "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+
 # Templates - not needed since we serve HTML directly
 
 @app.post("/video-job", response_model=VideoJobResponse, tags=["Jobs"])
-async def submit_video_job(request: VideoJobRequest, background_tasks: BackgroundTasks):
+async def submit_video_job(
+    video_source: str = None,
+    interval: float = 5.0,
+    file: UploadFile = File(None)
+):
     """
     Submit a new video processing job for frame extraction.
     
-    - **video_source**: Path to video file or URL
+    - **video_source**: Path to video file or URL (if no file uploaded)
     - **interval**: Time interval between extracted frames (in seconds)
+    - **file**: Video file to upload (optional)
     
     Returns job ID and status for tracking progress.
     """
     try:
-        job_id = job_manager.submit_job(request.video_source, request.interval)
+        # Determine the video source
+        if file:
+            # File uploaded - save it and use the saved path
+            if not file.filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm')):
+                raise HTTPException(status_code=400, detail="Invalid file type. Please upload a video file.")
+            
+            file_path = os.path.join(uploads_dir, file.filename)
+            with open(file_path, "wb") as f:
+                content = await file.read()
+                f.write(content)
+            
+            actual_video_source = file_path
+            logger.info(f"File uploaded: {file.filename} -> {file_path}")
+        elif video_source:
+            # Use provided video source path
+            actual_video_source = video_source
+        else:
+            raise HTTPException(status_code=400, detail="Either video_source or file must be provided")
+        
+        # Submit the job
+        job_id = job_manager.submit_job(actual_video_source, interval)
         return VideoJobResponse(
             job_id=job_id,
             status="pending",
             message="Job submitted successfully"
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error submitting job: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
