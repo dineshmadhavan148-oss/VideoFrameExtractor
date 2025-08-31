@@ -14,7 +14,7 @@ class TestAPI(unittest.TestCase):
     def setUp(self):
         """Set up test client"""
         # Mock Redis to avoid connection issues in tests
-        with patch('main.redis.Redis') as mock_redis:
+        with patch('cache.redis.Redis') as mock_redis:
             mock_redis.return_value.ping.side_effect = Exception("Redis unavailable")
             
             # Import app after mocking Redis
@@ -75,7 +75,7 @@ class TestAPI(unittest.TestCase):
     @patch('main.job_manager.get_job_status')
     def test_get_job_status_success(self, mock_get_job_status):
         """Test successful job status retrieval"""
-        from main import JobStatus
+        from models import JobStatus
         from datetime import datetime
         
         # Mock job status
@@ -116,7 +116,7 @@ class TestAPI(unittest.TestCase):
     @patch('main.job_manager.get_job_status')
     def test_get_job_frames_success(self, mock_get_job_status, mock_get_frames):
         """Test successful frames retrieval"""
-        from main import FrameMetadata, JobStatus
+        from models import FrameMetadata, JobStatus
         from datetime import datetime
         
         # Mock frames
@@ -155,7 +155,7 @@ class TestAPI(unittest.TestCase):
     @patch('main.job_manager.get_job_status')
     def test_get_job_frames_no_frames(self, mock_get_job_status, mock_get_frames):
         """Test frames retrieval when no frames exist"""
-        from main import JobStatus
+        from models import JobStatus
         from datetime import datetime
         
         # Mock empty frames but existing job

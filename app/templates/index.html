@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Frame Extraction API</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .header { background: #1f2937; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .endpoint { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; }
+        .endpoint-header { padding: 15px; background: #f8f9fa; cursor: pointer; display: flex; align-items: center; }
+        .endpoint-header:hover { background: #e9ecef; }
+        .endpoint-body { padding: 15px; display: none; }
+        .endpoint-body.show { display: block; }
+        .method { display: inline-block; padding: 4px 12px; border-radius: 4px; color: white; font-weight: bold; margin-right: 10px; }
+        .method.post { background: #28a745; }
+        .method.get { background: #007bff; }
+        .method.delete { background: #dc3545; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .response { margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .response pre { background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .quick-links { text-align: center; margin-bottom: 20px; }
+        .quick-links a { display: inline-block; background: #007bff; color: white; padding: 10px 15px; margin: 0 5px; text-decoration: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 Video Frame Extraction System API</h1>
+        <p>Interactive API testing interface</p>
+    </div>
+
+    <div class="quick-links">
+        <a href="/docs" target="_blank">📋 Swagger Docs</a>
+        <a href="/redoc" target="_blank">📖 ReDoc</a>
+        <a href="/health" target="_blank">💚 Health Check</a>
+    </div>
+
+    <!-- Submit Video Job -->
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle('submit-job')">
+            <span class="method post">POST</span>
+            <span>/video-job - Submit new video processing job</span>
+        </div>
+        <div class="endpoint-body" id="submit-job">
+            <form onsubmit="submitJob(event)">
+                <div class="form-group">
+                    <label>Video Source (file path or URL):</label>
+                    <input type="text" id="video_source" placeholder="sample.mp4 or http://example.com/video.mp4" required>
+                </div>
+                <div class="form-group">
+                    <label>Interval (seconds between frames):</label>
+                    <input type="number" id="interval" value="5.0" step="0.1" min="0.1" required>
+                </div>
+                <button type="submit" class="btn">Submit Job</button>
+            </form>
+            <div class="response" id="submit-response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Check Job Status -->
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle('job-status')">
+            <span class="method get">GET</span>
+            <span>/job-status/{job_id} - Check job status</span>
+        </div>
+        <div class="endpoint-body" id="job-status">
+            <form onsubmit="checkStatus(event)">
+                <div class="form-group">
+                    <label>Job ID:</label>
+                    <input type="text" id="job_id_status" placeholder="Enter job ID" required>
+                </div>
+                <button type="submit" class="btn">Check Status</button>
+            </form>
+            <div class="response" id="status-response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Get Job Frames -->
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle('job-frames')">
+            <span class="method get">GET</span>
+            <span>/frames/{job_id} - Get all frames for job</span>
+        </div>
+        <div class="endpoint-body" id="job-frames">
+            <form onsubmit="getFrames(event)">
+                <div class="form-group">
+                    <label>Job ID:</label>
+                    <input type="text" id="job_id_frames" placeholder="Enter job ID" required>
+                </div>
+                <button type="submit" class="btn">Get Frames</button>
+            </form>
+            <div class="response" id="frames-response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Recent Frames Dashboard -->
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle('recent-frames')">
+            <span class="method get">GET</span>
+            <span>/dashboard/recent-frames - Get recent frames</span>
+        </div>
+        <div class="endpoint-body" id="recent-frames">
+            <form onsubmit="getRecent(event)">
+                <div class="form-group">
+                    <label>Since Minutes:</label>
+                    <input type="number" id="since_minutes" value="60" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Job ID (optional):</label>
+                    <input type="text" id="job_id_recent" placeholder="Leave empty for all jobs">
+                </div>
+                <button type="submit" class="btn">Get Recent Frames</button>
+            </form>
+            <div class="response" id="recent-response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Cancel Job -->
+    <div class="endpoint">
+        <div class="endpoint-header" onclick="toggle('cancel-job')">
+            <span class="method delete">DELETE</span>
+            <span>/job/{job_id} - Cancel and delete job</span>
+        </div>
+        <div class="endpoint-body" id="cancel-job">
+            <form onsubmit="cancelJob(event)">
+                <div class="form-group">
+                    <label>Job ID:</label>
+                    <input type="text" id="job_id_cancel" placeholder="Enter job ID to cancel" required>
+                </div>
+                <button type="submit" class="btn" style="background: #dc3545;">Cancel Job</button>
+            </form>
+            <div class="response" id="cancel-response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        function toggle(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('show');
+        }
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Content-Type': 'application/json', ...options.headers },
+                    ...options
+                });
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showResponse(elementId, result) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            const status = result.success ? `✅ Success (${result.status})` : `❌ Error (${result.status || 'Network'})`;
+            const content = result.error || JSON.stringify(result.data, null, 2);
+            el.innerHTML = `<strong>${status}</strong><pre>${content}</pre>`;
+        }
+
+        async function submitJob(event) {
+            event.preventDefault();
+            const data = {
+                video_source: document.getElementById('video_source').value,
+                interval: parseFloat(document.getElementById('interval').value)
+            };
+            const result = await makeRequest('/video-job', { method: 'POST', body: JSON.stringify(data) });
+            showResponse('submit-response', result);
+            if (result.success && result.data.job_id) {
+                // Auto-fill job ID in other forms
+                const jobId = result.data.job_id;
+                document.getElementById('job_id_status').value = jobId;
+                document.getElementById('job_id_frames').value = jobId;
+                document.getElementById('job_id_cancel').value = jobId;
+            }
+        }
+
+        async function checkStatus(event) {
+            event.preventDefault();
+            const jobId = document.getElementById('job_id_status').value;
+            const result = await makeRequest(`/job-status/${jobId}`);
+            showResponse('status-response', result);
+        }
+
+        async function getFrames(event) {
+            event.preventDefault();
+            const jobId = document.getElementById('job_id_frames').value;
+            const result = await makeRequest(`/frames/${jobId}`);
+            showResponse('frames-response', result);
+        }
+
+        async function getRecent(event) {
+            event.preventDefault();
+            const minutes = document.getElementById('since_minutes').value;
+            const jobId = document.getElementById('job_id_recent').value;
+            let url = `/dashboard/recent-frames?since_minutes=${minutes}`;
+            if (jobId) url += `&job_id=${jobId}`;
+            const result = await makeRequest(url);
+            showResponse('recent-response', result);
+        }
+
+        async function cancelJob(event) {
+            event.preventDefault();
+            const jobId = document.getElementById('job_id_cancel').value;
+            if (!confirm(`Cancel job ${jobId}? This will delete all data.`)) return;
+            const result = await makeRequest(`/job/${jobId}`, { method: 'DELETE' });
+            showResponse('cancel-response', result);
+        }
+    </script>
+</body>
+</html>

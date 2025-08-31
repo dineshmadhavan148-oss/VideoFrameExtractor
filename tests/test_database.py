@@ -8,7 +8,8 @@ import sys
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
 
-from main import DatabaseManager, JobStatus, FrameMetadata
+from database import DatabaseManager
+from models import JobStatus, FrameMetadata
 
 
 class TestDatabaseManager(unittest.TestCase):

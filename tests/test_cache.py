@@ -7,7 +7,8 @@ import os
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
 
-from main import CacheManager, FrameMetadata
+from cache import CacheManager
+from models import FrameMetadata
 from datetime import datetime
 
 
@@ -16,7 +17,7 @@ class TestCacheManager(unittest.TestCase):
     
     def setUp(self):
         """Set up test cache manager (without Redis)"""
-        with patch('main.redis.Redis') as mock_redis:
+        with patch('cache.redis.Redis') as mock_redis:
             # Simulate Redis connection failure
             mock_redis.return_value.ping.side_effect = Exception("Redis unavailable")
             self.cache_manager = CacheManager()
@@ -121,7 +122,7 @@ class TestCacheManager(unittest.TestCase):
         all_cached_frames = self.cache_manager.get_recent_frames_cached()
         self.assertEqual(len(all_cached_frames), 1)
     
-    @patch('main.redis.Redis')
+    @patch('cache.redis.Redis')
     def test_redis_cache_manager(self, mock_redis_class):
         """Test cache manager with Redis"""
         # Mock Redis instance

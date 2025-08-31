@@ -9,7 +9,10 @@ import time
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
 
-from main import DatabaseManager, CacheManager, JobManager, FrameExtractor
+from database import DatabaseManager
+from cache import CacheManager
+from job_manager import JobManager
+from frame_extractor import FrameExtractor
 
 
 class TestIntegration(unittest.TestCase):
@@ -24,7 +27,7 @@ class TestIntegration(unittest.TestCase):
         os.makedirs(self.temp_frames_path, exist_ok=True)
         
         # Mock Redis connection
-        with patch('main.redis.Redis') as mock_redis:
+        with patch('cache.redis.Redis') as mock_redis:
             mock_redis.return_value.ping.side_effect = Exception("Redis unavailable")
             
             # Initialize components
@@ -77,7 +80,7 @@ class TestIntegration(unittest.TestCase):
     
     def test_frame_metadata_storage(self):
         """Test frame metadata storage and retrieval"""
-        from main import FrameMetadata
+        from models import FrameMetadata
         from datetime import datetime
         
         # Submit a job
@@ -106,7 +109,7 @@ class TestIntegration(unittest.TestCase):
     
     def test_cache_integration(self):
         """Test cache integration with frame storage"""
-        from main import FrameMetadata
+        from models import FrameMetadata
         from datetime import datetime
         
         # Create frame metadata
@@ -159,7 +162,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIsNone(job)
         self.assertFalse(os.path.exists(job_dir))
     
-    @patch('main.cv2.VideoCapture')
+    @patch('frame_extractor.cv2.VideoCapture')
     def test_frame_extractor_error_handling(self, mock_video_capture):
         """Test frame extractor error handling"""
         # Mock failed video opening
@@ -204,7 +207,7 @@ class TestIntegration(unittest.TestCase):
     
     def test_database_consistency(self):
         """Test database consistency across operations"""
-        from main import FrameMetadata
+        from models import FrameMetadata
         from datetime import datetime
         
         # Create job

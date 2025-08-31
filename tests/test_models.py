@@ -7,7 +7,7 @@ import os
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'app'))
 
-from main import FrameMetadata, JobStatus, VideoJobRequest, VideoJobResponse
+from models import FrameMetadata, JobStatus, VideoJobRequest, VideoJobResponse
 
 
 class TestDataModels(unittest.TestCase):
