@@ -38,7 +38,7 @@ The architecture is pretty straightforward:
 If you're deploying this for real, here's the fastest way:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/dineshmadhavan148-oss/VideoFrameExtractor.git
 cd video-frame-extractor
 
 # Deploy to your cluster
@@ -83,9 +83,6 @@ Here are the endpoints you'll actually use:
 | `DELETE` | `/job/{job_id}` | Cancel a job and clean up |
 | `GET` | `/health` | Is everything working? |
 
-The interactive docs are at `/docs` - they're actually pretty helpful.
-
-## Usage Examples
 
 ### Starting a Job
 

@@ -14,7 +14,10 @@ fi
 
 # Build Docker image (adjust registry as needed)
 echo "📦 Building Docker image..."
-docker build -t video-extractor:latest ..
+VERSION=$(date +%s)
+echo "   Using version tag: $VERSION"
+docker build --no-cache -t video-extractor:latest ..
+docker tag video-extractor:latest video-extractor:$VERSION
 
 # Tag for registry (uncomment and modify for remote registry)
 # docker tag video-extractor:latest your-registry/video-extractor:latest
@@ -35,6 +38,9 @@ kubectl wait --namespace=video-extractor --for=condition=available --timeout=300
 
 echo "🎬 Deploying Video Extractor application..."
 kubectl apply -f video-extractor.yaml
+
+echo "🔄 Updating deployment to use new image version..."
+kubectl set image deployment/video-extractor video-extractor=video-extractor:$VERSION -n video-extractor
 
 echo "⏳ Waiting for Video Extractor to be ready..."
 kubectl wait --namespace=video-extractor --for=condition=available --timeout=300s deployment/video-extractor
