@@ -154,7 +154,8 @@ async def health_check():
 @app.get("/", response_class=HTMLResponse, tags=["System"])
 async def root():
     """Interactive API testing interface"""
-    with open("app/templates/index.html", "r") as f:
+    template_path = os.path.join(os.path.dirname(__file__), "templates", "index.html")
+    with open(template_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
 # Main execution
